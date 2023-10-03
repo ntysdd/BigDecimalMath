@@ -1,5 +1,7 @@
 package ntysdd.bigdecimal;
 
+import lombok.NonNull;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -9,13 +11,9 @@ final class Sqrt {
         throw new UnsupportedOperationException();
     }
 
-    public static BigDecimal sqrt(BigDecimal value, RoundingMode roundingMode) {
-        if (value == null) {
-            throw new NullPointerException();
-        }
-        if (roundingMode == null) {
-            throw new NullPointerException();
-        }
+    public static BigDecimal sqrt(
+            @NonNull BigDecimal value,
+            @NonNull RoundingMode roundingMode) {
         if (value.getClass() != BigDecimal.class) {
             throw new IllegalArgumentException();
         }
