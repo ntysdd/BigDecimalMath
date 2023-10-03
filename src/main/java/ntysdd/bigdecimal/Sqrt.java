@@ -80,26 +80,45 @@ final class Sqrt {
         long rd = 0;
         boolean sbEmpty = false;
         for (int i = 0; i < precision; i++) {
-            for (int digit = 9; digit >= 0; digit--) {
-                BigInteger newRem = rem.subtract(res.multiply(twenty)
-                        .add(BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
-                if (newRem.signum() < 0) {
-                    continue;
+            BigInteger newRem;
+            int digit;
+            int digitLowerBound = 0;
+            int digitUpperBound = 10;
+            while (true) {
+                digit = (digitLowerBound + digitUpperBound + 1) / 2;
+                newRem = rem.subtract(
+                        res.multiply(twenty).add(
+                                BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
+                int newRemSignum = newRem.signum();
+                if (newRemSignum < 0) {
+                    digitUpperBound = digit;
+                } else if (newRemSignum > 0) {
+                    digitLowerBound = digit;
+                } else {
+                    break;
                 }
-                if (sbEmpty) {
-                    rd++;
+                if (digitLowerBound == digitUpperBound - 1) {
+                    if (digit != digitLowerBound) {
+                        digit = digitLowerBound;
+                        newRem = rem.subtract(
+                                res.multiply(twenty).add(
+                                        BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
+                    }
+                    break;
                 }
-                res = res.multiply(BigInteger.TEN).add(BigInteger.valueOf(digit));
-                rem = newRem;
-                if (sb.length() <= 0) {
-                    sbEmpty = true;
-                }
-                rem = rem.multiply(BigInteger.valueOf(10));
-                rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
-                rem = rem.multiply(BigInteger.valueOf(10));
-                rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
-                break;
             }
+            if (sbEmpty) {
+                rd++;
+            }
+            res = res.multiply(BigInteger.TEN).add(BigInteger.valueOf(digit));
+            rem = newRem;
+            if (sb.length() <= 0) {
+                sbEmpty = true;
+            }
+            rem = rem.multiply(BigInteger.valueOf(10));
+            rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
+            rem = rem.multiply(BigInteger.valueOf(10));
+            rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
         }
         return new BigDecimal(res, Math.addExact(rs, Math.toIntExact(rd)));
     }
