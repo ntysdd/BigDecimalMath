@@ -13,6 +13,9 @@ final class Sqrt {
         if (value == null) {
             throw new NullPointerException();
         }
+        if (roundingMode == null) {
+            throw new NullPointerException();
+        }
         if (value.getClass() != BigDecimal.class) {
             throw new IllegalArgumentException();
         }
