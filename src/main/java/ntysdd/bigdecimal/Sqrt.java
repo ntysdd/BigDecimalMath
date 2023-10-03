@@ -1,7 +1,11 @@
 package ntysdd.bigdecimal;
 
+import lombok.NonNull;
+import lombok.var;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.math.RoundingMode;
 
 final class Sqrt {
@@ -9,14 +13,18 @@ final class Sqrt {
         throw new UnsupportedOperationException();
     }
 
-    public static BigDecimal sqrt(BigDecimal value, RoundingMode roundingMode) {
-        if (value == null) {
-            throw new NullPointerException();
-        }
+    public static BigDecimal sqrt(
+            @NonNull BigDecimal value,
+            @NonNull MathContext mathContext) {
         if (value.getClass() != BigDecimal.class) {
             throw new IllegalArgumentException();
         }
+        var roundingMode = mathContext.getRoundingMode();
+        int precision = mathContext.getPrecision();
         if (roundingMode != RoundingMode.FLOOR && roundingMode != RoundingMode.DOWN) {
+            throw new UnsupportedOperationException();
+        }
+        if (precision == 0) {
             throw new UnsupportedOperationException();
         }
         int valueSignum = value.signum();
@@ -29,9 +37,7 @@ final class Sqrt {
         if (BigDecimal.ONE.compareTo(value) == 0) {
             return value;
         }
-        BigInteger unscaledValue = value.unscaledValue();
-        int len = unscaledValue.toString().length();
-        return sqrt(unscaledValue, value.scale(), len);
+        return sqrt(value.unscaledValue(), value.scale(), precision);
     }
 
     private static int extractDigitFromStringBuilder(StringBuilder sb) {
@@ -48,53 +54,72 @@ final class Sqrt {
             BigInteger unscaledValue,
             int scale,
             int precision) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(unscaledValue);
+        var sb = new StringBuilder(unscaledValue.toString());
+
         int rs;
-        rs = scale;
-        if (rs % 2 != 0) {
-            rs++;
+        if (scale % 2 != 0) {
+            rs = Math.floorDiv(scale, 2) + 1;
             sb.append("0");
+        } else {
+            rs = scale / 2;
         }
         sb.reverse();
 
-        int intRem = 0;
+        int intRem;
         if (sb.length() % 2 != 0) {
             intRem = extractDigitFromStringBuilder(sb);
         } else {
-            intRem = extractDigitFromStringBuilder(sb);
-            intRem *= 10;
-            intRem += extractDigitFromStringBuilder(sb);
+            int d1 = extractDigitFromStringBuilder(sb);
+            int d2 = extractDigitFromStringBuilder(sb);
+            intRem = d1 * 10 + d2;
         }
         BigInteger rem = BigInteger.valueOf(intRem);
-
         BigInteger res = BigInteger.ZERO;
         BigInteger twenty = BigInteger.valueOf(20);
 
-        int rd = 0;
+        long rd = 0;
         boolean sbEmpty = false;
         for (int i = 0; i < precision; i++) {
-            for (int digit = 9; digit >= 0; digit--) {
-                BigInteger newRem = rem.subtract(res.multiply(twenty)
-                        .add(BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
-                if (newRem.signum() < 0) {
-                    continue;
+            BigInteger newRem;
+            int digit;
+            int digitLowerBound = 0;
+            int digitUpperBound = 10;
+            while (true) {
+                digit = (digitLowerBound + digitUpperBound + 1) / 2;
+                newRem = rem.subtract(
+                        res.multiply(twenty).add(
+                                BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
+                int newRemSignum = newRem.signum();
+                if (newRemSignum < 0) {
+                    digitUpperBound = digit;
+                } else if (newRemSignum > 0) {
+                    digitLowerBound = digit;
+                } else {
+                    break;
                 }
-                if (sbEmpty) {
-                    rd++;
+                if (digitLowerBound == digitUpperBound - 1) {
+                    if (digit != digitLowerBound) {
+                        digit = digitLowerBound;
+                        newRem = rem.subtract(
+                                res.multiply(twenty).add(
+                                        BigInteger.valueOf(digit)).multiply(BigInteger.valueOf(digit)));
+                    }
+                    break;
                 }
-                res = res.multiply(BigInteger.TEN).add(BigInteger.valueOf(digit));
-                rem = newRem;
-                if (sb.length() <= 0) {
-                    sbEmpty = true;
-                }
-                rem = rem.multiply(BigInteger.valueOf(10));
-                rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
-                rem = rem.multiply(BigInteger.valueOf(10));
-                rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
-                break;
             }
+            if (sbEmpty) {
+                rd++;
+            }
+            res = res.multiply(BigInteger.TEN).add(BigInteger.valueOf(digit));
+            rem = newRem;
+            if (sb.length() <= 0) {
+                sbEmpty = true;
+            }
+            rem = rem.multiply(BigInteger.valueOf(10));
+            rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
+            rem = rem.multiply(BigInteger.valueOf(10));
+            rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
         }
-        return new BigDecimal(res, rs / 2 + rd);
+        return new BigDecimal(res, Math.addExact(rs, Math.toIntExact(rd)));
     }
 }
