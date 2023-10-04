@@ -55,18 +55,11 @@ final class Sqrt {
             int scale,
             int precision) {
         var sb = new StringBuilder(unscaledValue.toString());
-
-        int rs;
-        if (scale % 2 != 0) {
-            rs = Math.floorDiv(scale, 2) + 1;
-            sb.append("0");
-        } else {
-            rs = scale / 2;
-        }
         sb.reverse();
-
+        long intLen = (long) sb.length() - (long) scale;
+        long rs = -((intLen + 1) >> 1);
         int intRem;
-        if (sb.length() % 2 != 0) {
+        if (intLen % 2 != 0) {
             intRem = extractDigitFromStringBuilder(sb);
         } else {
             int d1 = extractDigitFromStringBuilder(sb);
@@ -77,8 +70,6 @@ final class Sqrt {
         BigInteger res = BigInteger.ZERO;
         BigInteger twenty = BigInteger.valueOf(20);
 
-        long rd = 0;
-        boolean sbEmpty = false;
         for (int i = 0; i < precision; i++) {
             BigInteger newRem;
             int digit;
@@ -107,19 +98,15 @@ final class Sqrt {
                     break;
                 }
             }
-            if (sbEmpty) {
-                rd++;
-            }
+
             res = res.multiply(BigInteger.TEN).add(BigInteger.valueOf(digit));
             rem = newRem;
-            if (sb.length() <= 0) {
-                sbEmpty = true;
-            }
+
             rem = rem.multiply(BigInteger.valueOf(10));
             rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
             rem = rem.multiply(BigInteger.valueOf(10));
             rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
         }
-        return new BigDecimal(res, Math.addExact(rs, Math.toIntExact(rd)));
+        return new BigDecimal(res, Math.toIntExact(rs + precision));
     }
 }

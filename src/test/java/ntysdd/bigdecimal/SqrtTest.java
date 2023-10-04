@@ -76,6 +76,8 @@ class SqrtTest {
                 new MathContext(4, RoundingMode.FLOOR)).toString());
         Assertions.assertEquals("1.4142", Sqrt.sqrt(new BigDecimal("2.0000"),
                 new MathContext(5, RoundingMode.FLOOR)).toString());
+        Assertions.assertEquals("1.4", Sqrt.sqrt(new BigDecimal("2.0000000"),
+                new MathContext(2, RoundingMode.FLOOR)).toString());
     }
 
     @Test
@@ -146,4 +148,9 @@ class SqrtTest {
                 new MathContext(5, RoundingMode.FLOOR)).toString());
     }
 
+    @Test
+    void testSqrt_PointOne() {
+        Assertions.assertEquals("0.31", Sqrt.sqrt(new BigDecimal("0.10"),
+                new MathContext(2, RoundingMode.FLOOR)).toString());
+    }
 }
