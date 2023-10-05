@@ -44,13 +44,13 @@ class SqrtTest {
     @Test
     void testSqrt_One() {
         Assertions.assertSame(BigDecimal.ONE, Sqrt.sqrt(BigDecimal.ONE,
-                new MathContext(10, RoundingMode.FLOOR)));
+                new MathContext(1, RoundingMode.FLOOR)));
         BigDecimal value = new BigDecimal("1");
-        Assertions.assertSame(value, Sqrt.sqrt(value, new MathContext(10,
+        Assertions.assertSame(value, Sqrt.sqrt(value, new MathContext(1,
                 RoundingMode.FLOOR)));
         BigDecimal value2 = new BigDecimal("1.00");
-        Assertions.assertSame(value2, Sqrt.sqrt(value2, new MathContext(10,
-                RoundingMode.FLOOR)));
+        Assertions.assertEquals("1.000000000", Sqrt.sqrt(value2, new MathContext(10,
+                RoundingMode.FLOOR)).toString());
     }
 
     @Test

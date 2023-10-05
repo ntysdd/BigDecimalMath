@@ -35,7 +35,10 @@ final class Sqrt {
             throw new ArithmeticException();
         }
         if (BigDecimal.ONE.compareTo(value) == 0) {
-            return value;
+            if (value.precision() == precision) {
+                return value;
+            }
+            return BigDecimal.ONE.setScale(precision - 1, RoundingMode.DOWN);
         }
         return sqrt(value.unscaledValue(), value.scale(), precision);
     }
