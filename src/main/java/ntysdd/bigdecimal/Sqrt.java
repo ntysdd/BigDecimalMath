@@ -35,7 +35,10 @@ final class Sqrt {
             throw new ArithmeticException();
         }
         if (BigDecimal.ONE.compareTo(value) == 0) {
-            return value;
+            if (value.precision() == precision) {
+                return value;
+            }
+            return BigDecimal.ONE.setScale(precision - 1, RoundingMode.DOWN);
         }
         return sqrt(value.unscaledValue(), value.scale(), precision);
     }
@@ -108,5 +111,67 @@ final class Sqrt {
             rem = rem.add(BigInteger.valueOf(extractDigitFromStringBuilder(sb)));
         }
         return new BigDecimal(res, Math.toIntExact(rs + precision));
+    }
+
+    public static BigInteger sqrtExact(@NonNull BigInteger value) {
+        if (value.getClass() != BigInteger.class) {
+            throw new IllegalArgumentException();
+        }
+        if (value.signum() <= 0) {
+            if (value.signum() == 0) {
+                return value;
+            }
+            throw new ArithmeticException();
+        }
+        if (BigInteger.ONE.equals(value)) {
+            return value;
+        }
+        int valueBitLength = value.bitLength();
+        if (valueBitLength <= 30) {
+            int v = value.intValueExact();
+            int s = (int) StrictMath.sqrt((double) v);
+            if ((long) s * (long) s == v) {
+                return BigInteger.valueOf(s);
+            }
+            throw new ArithmeticException();
+        }
+        int guessBit = 28 + valueBitLength % 2;
+        int initBits = (int) Math.sqrt(value.shiftRight(
+                valueBitLength - guessBit).intValueExact());
+        BigInteger x = BigInteger.valueOf(Math.max(initBits, 1))
+                .shiftLeft((valueBitLength - guessBit) / 2);
+
+        BigInteger lower = BigInteger.ONE;
+        BigInteger upper = value;
+        while (true) {
+            BigInteger x2 = x.multiply(x);
+            int compare = x2.compareTo(value);
+            if (compare > 0) {
+                upper = upper.min(x);
+                x = x.add(value.divide(x)).shiftRight(1);
+            } else if (compare < 0) {
+                lower = lower.max(x);
+                BigInteger[] divResult = value.divideAndRemainder(x);
+                x = x.add(divResult[0]);
+                if (!divResult[1].equals(BigInteger.ZERO)) {
+                    x = x.add(BigInteger.ONE);
+                }
+                boolean isOdd = x.testBit(0);
+                x = x.shiftRight(1);
+                if (isOdd) {
+                    x = x.add(BigInteger.ONE);
+                }
+            } else {
+                return x;
+            }
+            if (upper.subtract(lower).compareTo(BigInteger.valueOf(10)) < 0) {
+                for (BigInteger t = lower.add(BigInteger.ONE); t.compareTo(upper) < 0; t = t.add(BigInteger.ONE)) {
+                    if (t.multiply(t).equals(value)) {
+                        return t;
+                    }
+                }
+                throw new ArithmeticException();
+            }
+        }
     }
 }
