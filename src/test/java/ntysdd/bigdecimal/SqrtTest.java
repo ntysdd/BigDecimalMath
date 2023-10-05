@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
@@ -175,5 +176,51 @@ class SqrtTest {
                 new MathContext(2, RoundingMode.FLOOR)).toString());
         Assertions.assertEquals("0.031", Sqrt.sqrt(new BigDecimal("1.000E-3"),
                 new MathContext(2, RoundingMode.FLOOR)).toString());
+    }
+
+    @Test
+    void testSqrtExact_Zero() {
+        BigInteger zero = new BigInteger("0");
+        Assertions.assertSame(zero, Sqrt.sqrtExact(zero));
+    }
+
+    @Test
+    void testSqrtExact_Negative() {
+        Assertions.assertThrows(ArithmeticException.class, () -> {
+            Sqrt.sqrtExact(BigInteger.valueOf(-1));
+        });
+    }
+
+    @Test
+    void testSqrtExact_One() {
+        BigInteger one = new BigInteger("1");
+        Assertions.assertSame(one, Sqrt.sqrtExact(one));
+    }
+
+    @Test
+    void testSqrtExact_Two() {
+        Assertions.assertThrows(ArithmeticException.class, () -> {
+            Sqrt.sqrtExact(BigInteger.valueOf(2));
+        });
+    }
+
+    @Test
+    void testSqrtExact_Four() {
+        Assertions.assertEquals(BigInteger.valueOf(2),
+                Sqrt.sqrtExact(BigInteger.valueOf(4)));
+    }
+
+    @Test
+    void testSqrtExact_BigNumber() {
+        Assertions.assertEquals(new BigInteger("50712712067055368402"),
+                Sqrt.sqrtExact(new BigInteger(
+                        "2571779165196063176145474879527940033604")));
+    }
+
+    @Test
+    void testSqrtExact_BigNumberNotExact() {
+        Assertions.assertThrows(ArithmeticException.class, () -> {
+            Sqrt.sqrtExact(new BigInteger("99999999999999999999999999"));
+        });
     }
 }
